@@ -1,6 +1,7 @@
 package TFM
 
 import java.io.File
+import java.text.NumberFormat
 
 import TFM.CommProtocol.{HMMExtractionRequest, TransitionsRequest, UpdateMarkovProbsRequest}
 import akka.actor.Actor
@@ -33,11 +34,13 @@ class MarkovExtractor extends Actor{
     val normalizedNotes = normalizeNotes(notes, octaves)
     initializeMarkovChain
     var prevNote = 999
+    var transitionsCount = 0
     normalizedNotes.foreach( note =>
       if (prevNote == 999) {
         prevNote = note
       } else {
         markovChain = markovChain.addTransition(prevNote, note)
+        transitionsCount += 1
         prevNote = note
       }
     )
@@ -46,7 +49,7 @@ class MarkovExtractor extends Actor{
       notify("transitions for " + state + ": " + markovChain.transitionsFor(state).toString())
     )
     updateMarkovProbs(kMMGUI.lastNoteField.text.toInt)
-    notify("\n¡Notas extraídas exitosamente de los " + count + " ficheros encontrados en " + path + "! Se ha generado un modelo de Markov con las transiciones")
+    notify("\n¡Notas extraídas exitosamente de los " + count + " ficheros encontrados en " + path + "! Se ha generado un modelo de Markov con un total de " + NumberFormat.getIntegerInstance().format(transitionsCount) + " transiciones")
   }
 
   def extractNotesFromTxt(file: File) = {
