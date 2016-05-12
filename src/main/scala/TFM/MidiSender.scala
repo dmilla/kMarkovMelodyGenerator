@@ -17,7 +17,7 @@ class MidiSender extends Actor{
     myMsg.setMessage(ShortMessage.NOTE_ON, 0, note, 93)
     //notifyMidiDevices()
     rcvr.send(myMsg, -1)
-    notify(note + " midi note sent!")
+    notify("\n" + note + " midi note sent!\n")
   }
 
   def notifyMidiDevices() = {

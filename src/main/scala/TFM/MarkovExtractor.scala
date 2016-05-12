@@ -2,7 +2,7 @@ package TFM
 
 import java.io.File
 
-import TFM.CommProtocol.{HMMExtractionRequest, TransitionsRequest}
+import TFM.CommProtocol.{HMMExtractionRequest, TransitionsRequest, UpdateMarkovProbsRequest}
 import akka.actor.Actor
 
 import scala.collection.mutable.ArrayBuffer
@@ -19,11 +19,13 @@ class MarkovExtractor extends Actor{
     notify("Calculando Markov Chain con las notas de los archivos txt en la carpeta: " + path)
     val pathFile = new File(path)
     val notes = ArrayBuffer.empty[Int]
+    var count = 0
     for(file <- pathFile.listFiles if file.getName endsWith ".txt"){
       try {
         val file_notes = extractNotesFromTxt(file)
-        //notify("Got " + file_notes.size + " total notes")
+        notify("Extraidas " + file_notes.size + " notas de " + file.getName)
         notes ++= file_notes
+        count += 1
       } catch {
         case e: Exception => notify("Excepción extrayendo notas del archivo " + file.getName + " en " + path + " : " + e);
       }
@@ -43,7 +45,8 @@ class MarkovExtractor extends Actor{
     markovChain.states().foreach( state =>
       notify("transitions for " + state + ": " + markovChain.transitionsFor(state).toString())
     )
-    //notify("¡Características extraídas exitosamente de " + id + " secuencias de notas! Se ha generado un fichero csv con los datos en: " + path)
+    updateMarkovProbs(kMMGUI.lastNoteField.text.toInt)
+    notify("\n¡Notas extraídas exitosamente de los " + count + " ficheros encontrados en " + path + "! Se ha generado un modelo de Markov con las transiciones")
   }
 
   def extractNotesFromTxt(file: File) = {
@@ -92,7 +95,13 @@ class MarkovExtractor extends Actor{
 
   def notify(msg: String) = kMMGUI.addOutput(msg)
 
+  def updateMarkovProbs(state: Int) = {
+    kMMGUI.markovOctave1.fillFromMap(markovChain.transitionsFor(normalizeNote(state, octaves)).toMap)
+    kMMGUI.markovOctaveLabel.text = "Probabilidades de las notas para el estado actual (" + state + ") :"
+  }
+
   def receive = {
+    case UpdateMarkovProbsRequest(state: Int) => updateMarkovProbs(state)
     case TransitionsRequest(state: Int) => sender ! markovChain.transitionsFor(normalizeNote(state, octaves))
     case HMMExtractionRequest(path) => extractMarkovChain(path)
     case _ ⇒ println("FeaturesExtractor received unknown message")

@@ -15,5 +15,6 @@ object CommProtocol {
   case class SendMidiNoteRequest(note: Int)
   case class CalcNoteOutputRequest(markovProbabilities: List[(Int, Double)], yPosition: Double)
   case class TransitionsRequest(state: Int)
+  case class UpdateMarkovProbsRequest(state: Int)
 
 }

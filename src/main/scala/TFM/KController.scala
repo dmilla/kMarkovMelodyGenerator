@@ -1,5 +1,7 @@
 package TFM
 
+import java.text.DecimalFormat
+
 import TFM.CommProtocol.{CalcNoteOutputRequest, SendMidiNoteRequest}
 import akka.actor.Actor
 
@@ -9,18 +11,22 @@ import akka.actor.Actor
 class KController(ui: UI) extends Actor{
 
   var affectedNotes = 1
-  var k: Double = 0.3
+  var k: Double = 0.5
+
+  val formatter = new DecimalFormat("#.##")
 
   def calcNoteOutput(markovProbabilites: List[(Int, Double)], yPosition: Double) = {
     val size = markovProbabilites.size
     val controlNote = ((size - 1) * yPosition).round.toInt
-    notify("Initial Markov probabilites: " + markovProbabilites)
+    //notify("Initial Markov probabilites: " + markovProbabilites)
     notify("Control Note is: " + controlNote)
-    val controlProbabilities = calcControlProbabilities(markovProbabilites: List[(Int, Double)], yPosition: Double, controlNote: Int)
-    notify("Final output probabilities: " + controlProbabilities)
-    val out = sample[Int](controlProbabilities.toMap)
-    notify("Nota de salida: " + out)
+    val controlProbabilities = calcControlProbabilities(markovProbabilites: List[(Int, Double)], yPosition: Double, controlNote: Int).toMap
+    //notify("Final output probabilities: " + controlProbabilities)
+    val out = sample[Int](controlProbabilities)
+    notify("Nota de salida: " + out + " - Se reproducirá una nota normalizada 48 notas por encima")
     ui.midiSender ! SendMidiNoteRequest(out + 48) //TODO normalize output as well
+    updateControlProbs(controlProbabilities, yPosition)
+    kMMGUI.updateState(out)
   }
 
   def calcControlProbabilities(markovProbabilites: List[(Int, Double)], yPosition: Double, controlNote: Int) = {
@@ -65,6 +71,11 @@ class KController(ui: UI) extends Actor{
   }
 
   def notify(msg: String) = kMMGUI.addOutput(msg)
+
+  def updateControlProbs(probs: Map[Int, Double], yPosition: Double) = {
+    kMMGUI.controlOctave1.fillFromMap(probs)
+    kMMGUI.controlOctaveLabel.text = "Probabilidades de las notas modificadas por el control con la posición Y " + formatter.format(yPosition) + ":"
+  }
 
   def receive: Receive = {
     case CalcNoteOutputRequest(markovProbabilities, yPosition) => calcNoteOutput(markovProbabilities, yPosition)
