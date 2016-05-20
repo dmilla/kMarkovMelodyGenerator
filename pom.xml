@@ -8,11 +8,20 @@
     <scala.version>2.11.8</scala.version>
   </properties>
 
+
   <repositories>
     <repository>
       <id>scala-tools.org</id>
       <name>Scala-Tools Maven2 Repository</name>
       <url>http://scala-tools.org/repo-releases</url>
+    </repository>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>bintray-jodersky-maven</id>
+      <name>bintray</name>
+      <url>http://dl.bintray.com/jodersky/maven</url>
     </repository>
   </repositories>
 
@@ -51,6 +60,16 @@
       <groupId>com.typesafe.akka</groupId>
       <artifactId>akka-actor_2.11</artifactId>
       <version>2.4.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.jodersky</groupId>
+      <artifactId>flow-core_2.11</artifactId>
+      <version>2.6.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.jodersky</groupId>
+      <artifactId>flow-native</artifactId>
+      <version>2.6.0</version>
     </dependency>
   </dependencies>
 

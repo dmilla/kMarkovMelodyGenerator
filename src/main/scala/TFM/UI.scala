@@ -22,6 +22,7 @@ class UI extends MainFrame {
   title = "kMarkovMelodyGenerator - Diego Milla - TFM - Máster SSII - USAL"
   preferredSize = new Dimension(1500, 1000)
   val actorSystem = ActorSystem("TFMSystem")
+  val watcher = actorSystem.actorOf(Props(classOf[DeviceWatcher]), name = "deviceWatcher")
   val markovExtractor = actorSystem.actorOf(Props(classOf[MarkovExtractor]))
   val midiSender = actorSystem.actorOf(Props[MidiSender])
   val controller = actorSystem.actorOf(Props(classOf[KController], this))

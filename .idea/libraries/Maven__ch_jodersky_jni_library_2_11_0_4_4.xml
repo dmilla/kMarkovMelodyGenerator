@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: ch.jodersky:jni-library_2.11:0.4.4">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/ch/jodersky/jni-library_2.11/0.4.4/jni-library_2.11-0.4.4.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/ch/jodersky/jni-library_2.11/0.4.4/jni-library_2.11-0.4.4-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/ch/jodersky/jni-library_2.11/0.4.4/jni-library_2.11-0.4.4-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
