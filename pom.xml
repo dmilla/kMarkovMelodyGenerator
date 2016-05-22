@@ -63,7 +63,7 @@
     </dependency>
     <dependency>
       <groupId>com.github.jodersky</groupId>
-      <artifactId>flow-core_2.11</artifactId>
+      <artifactId>flow-stream_2.11</artifactId>
       <version>2.6.0</version>
     </dependency>
     <dependency>
