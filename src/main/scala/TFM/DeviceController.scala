@@ -34,15 +34,16 @@ class DeviceController extends Actor{
 
   val Delay = FiniteDuration(500, MILLISECONDS)
 
+
   val serial: Flow[ByteString, ByteString, Future[Serial.Connection]] =
-    Serial().open(PORT, DEVICE_SETTINGS)
+    Serial().open(PORT, DEVICE_SETTINGS, false, 4096)
 
   val printer: Sink[ByteString, _] = Sink.foreach[ByteString]{data =>
-    notify("server says: " + data.decodeString("UTF-8"))
+    notify("device says: " + data.decodeString("UTF-8"))
   }
 
   val ticker: Source[ByteString, _] = Source.tick(Delay, Delay, ()).scan(0){case (x, _) =>
-    x + 1
+    x
   }.map{ x =>
     notify(x.toString)
     ByteString(x.toString)
