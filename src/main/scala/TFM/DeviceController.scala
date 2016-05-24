@@ -2,6 +2,7 @@ package TFM
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props, Terminated}
 import akka.io.IO
+import akka.stream.{ActorMaterializer, Inlet}
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import akka.util.ByteString
 import com.github.jodersky.flow.{Parity, SerialSettings}
@@ -17,7 +18,7 @@ class DeviceController extends Actor{
 
   //TODO - INSTANTIATE DEVICE CONTROLLER, WATCH NEW PORTS AND TRY TO CONNECT TO DEVICE AUTOMATICALLY
   val BAUD_RATE = 115200
-  val CHARACTER_SIZE = 8
+  val CHARACTER_SIZE = 16
   val PARITY = Parity.None
   val TWO_STOP_BITS = false
   val DEVICE_SETTINGS = SerialSettings(BAUD_RATE, CHARACTER_SIZE, TWO_STOP_BITS, PARITY)
@@ -32,8 +33,11 @@ class DeviceController extends Actor{
   val ARM_LENGTH_2 = 30.0
   val PORT = "/dev/ttyUSB0"
 
-  val Delay = FiniteDuration(500, MILLISECONDS)
 
+  implicit val system = kMMGUI.actorSystem
+  implicit val materializer = ActorMaterializer()
+
+  val Delay = FiniteDuration(500, MILLISECONDS)
 
   val serial: Flow[ByteString, ByteString, Future[Serial.Connection]] =
     Serial().open(PORT, DEVICE_SETTINGS, false, 4096)
@@ -42,11 +46,25 @@ class DeviceController extends Actor{
     notify("device says: " + data.decodeString("UTF-8"))
   }
 
-  val ticker: Source[ByteString, _] = Source.tick(Delay, Delay, ()).scan(0){case (x, _) =>
-    x
+  /*val ticker: Source[ByteString, _] = Source.tick(Delay, Delay, ()).scan(0){case (x, _) =>
+    send_force
   }.map{ x =>
     notify(x.toString)
     ByteString(x.toString)
+  }
+*/
+
+  // TODO - USE SOURCE.fromPublisher ???? http://zuchos.com/blog/2015/05/23/how-to-write-a-subscriber-for-akka-streams/
+  val ticker: Source[ByteString, _] = Source.tick(Delay, Delay, ()).scan(0){case (x, _) =>
+    send_force
+  }.map{ x =>
+    notify(x.toString)
+    ByteString(x.toString)
+  }
+
+  def send_force = {
+    if (true) 0
+    else 0
   }
 
   val connection: Future[Serial.Connection] = ticker.viaMat(serial)(Keep.right).to(printer).run()
