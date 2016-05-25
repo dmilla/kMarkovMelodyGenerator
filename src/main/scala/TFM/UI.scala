@@ -23,6 +23,7 @@ class UI extends MainFrame {
   preferredSize = new Dimension(1500, 1000)
   val actorSystem = ActorSystem("TFMSystem")
   val watcher = actorSystem.actorOf(Props(classOf[DeviceWatcher]), name = "deviceWatcher")
+  val deviceController = actorSystem.actorOf(Props(classOf[DeviceController]))
   val markovExtractor = actorSystem.actorOf(Props(classOf[MarkovExtractor]))
   val midiSender = actorSystem.actorOf(Props[MidiSender])
   val controller = actorSystem.actorOf(Props(classOf[KController], this))
@@ -53,6 +54,9 @@ class UI extends MainFrame {
 
   //TODO - USE FormattedTextFields to avoid bad entries in number fields
   val integerFieldFormatter = NumberFormat.getIntegerInstance()
+
+  val portField = new TextField
+  portField.peer.setMaximumSize(textFieldSize)
 
   contents = new BoxPanel(Orientation.Vertical) {
 
@@ -85,6 +89,19 @@ class UI extends MainFrame {
       contents += Swing.HStrut(5)
       contents += Button("Enviar") {
         midiSender ! SendMidiNoteRequest(noteField.text.toInt)
+      }
+    }
+    contents += Swing.VStrut(10)
+    contents += new BoxPanel(Orientation.Horizontal) {
+      val label = new Label("Puerto del joystick")
+      label.peer.setMaximumSize(labelSize)
+      label.horizontalAlignment = Alignment.Left
+      contents += label
+      contents += Swing.HStrut(5)
+      contents += portField
+      contents += Swing.HStrut(5)
+      contents += Button("Conectar") {
+        deviceController ! ConnectToDeviceRequest(portField.text)
       }
     }
     contents += Swing.VStrut(10)
