@@ -55,7 +55,7 @@ class UI extends MainFrame {
   //TODO - USE FormattedTextFields to avoid bad entries in number fields
   val integerFieldFormatter = NumberFormat.getIntegerInstance()
 
-  val portField = new TextField
+  val portField = new TextField { text = "/dev/ttyUSB0" }
   portField.peer.setMaximumSize(textFieldSize)
 
   contents = new BoxPanel(Orientation.Vertical) {

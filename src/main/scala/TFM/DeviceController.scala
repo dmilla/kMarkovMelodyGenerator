@@ -1,5 +1,7 @@
 package TFM
 
+import java.nio.{ByteBuffer, ByteOrder}
+
 import TFM.CommProtocol.ConnectToDeviceRequest
 import akka.actor.{Actor, ActorLogging, ActorRef, Props, Terminated}
 import akka.io.IO
@@ -7,11 +9,12 @@ import akka.stream.{ActorMaterializer, Inlet}
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import akka.util.ByteString
 import com.github.jodersky.flow.{Parity, SerialSettings}
-import com.github.jodersky.flow.stream._
+import com.github.jodersky.flow.stream.Serial
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.{Success, Failure}
+import scala.util.{Failure, Success}
+import com.github.jodersky.flow.{AccessDeniedException, SerialSettings}
 
 /**
   * Created by diego on 9/05/16.
@@ -33,12 +36,12 @@ class DeviceController extends Actor{
   //val PORT = "/dev/ttyUSB0"
   var initialCoords: (Short, Short) = (-1, -1)
 
-  val Delay = FiniteDuration(500, MILLISECONDS)
+  val Delay = FiniteDuration(1000, MILLISECONDS)
 
   implicit val system = kMMGUI.actorSystem
   implicit val materializer = ActorMaterializer()
 
-  def connectToDevice(port: String) = {
+  def connectToDeviceStream(port: String) = {
     import system.dispatcher
 
     notify("intentando conectar a " +  port)
@@ -47,10 +50,10 @@ class DeviceController extends Actor{
       Serial().open(port, DEVICE_SETTINGS, false, BUFFER_SIZE)
 
     val printer: Sink[ByteString, _] = Sink.foreach[ByteString]{data =>
-      notify("device says bulk: " + data.decodeString("UTF-8"))
+      notify("device says bulk: " + data.toString)
       val shorts = convert(data.seq)
-      notify("device says (shorts): " + shorts.toString)
       if (shorts.size == 2) {
+        notify("device says (shorts): " + shorts(0) + " / " + shorts(1))
         if (initialCoords == (-1, -1)) initialCoords = (shorts(0), shorts(1))
         else getCoordinates((shorts(0), shorts(1)), initialCoords)
       }
@@ -69,7 +72,7 @@ class DeviceController extends Actor{
       sendForce //TEST - NOT IMPLEMENTED YET
     }.map{ x =>
       notify("Sending (0 , 0) to motors")
-      ByteString(0.toByte, 0.toByte,0.toByte,0.toByte)
+      ByteString(-0.toByte, 0.toByte, 0.toByte, 0.toByte)
     }
 
     ticker.viaMat(serial)(Keep.right).to(printer).run()  onComplete {
@@ -77,6 +80,11 @@ class DeviceController extends Actor{
       case Failure(error) => notify("error trying to connect: " + error)
     }
   }
+
+  /*def connectToDevice(port: String) = {
+    notify("intentando conectar a " +  port)
+    IO(Serial) ! Serial.Open(port, DEVICE_SETTINGS)
+  }*/
 
   def getCoordinates(currentValues: (Short, Short), initialValues: (Short, Short)) = {
     val degAngle1 = 90.0f + (currentValues._1 - initialValues._1) / DEGREES_PER_STEP
@@ -123,11 +131,33 @@ class DeviceController extends Actor{
 
   def notify(msg: String) = kMMGUI.addOutput(msg)
 
+  def bytesToShort(byte1: Byte, byte2: Byte) : Short = {
+    ByteBuffer
+      .allocate(2)
+      .order(ByteOrder.LITTLE_ENDIAN)
+      .put(byte1)
+      .put(byte2)
+      .getShort(0)
+  }
+
   def convert(in: IndexedSeq[Byte]): Array[Short] =
-    in.grouped(2).map { case IndexedSeq(hi, lo) => (hi << 8 | lo).toShort } .toArray
+    in.grouped(2).map { case IndexedSeq(hi, lo) => bytesToShort(hi, lo)} .toArray
 
   def receive: Receive = {
-    case ConnectToDeviceRequest(port) => connectToDevice(port)
+    case ConnectToDeviceRequest(port) => connectToDeviceStream(port)
+    /*case Serial.Received(data) => {
+      println("Received data: " + data.toString)
+    }
+    case Serial.CommandFailed(cmd: Serial.Open, reason: AccessDeniedException) =>
+      notify("You're not allowed to open that port!")
+    case Serial.CommandFailed(cmd: Serial.Open, reason) =>
+      notify("Could not open port for some other reason: " + reason.getMessage)
+    case Serial.Opened(settings) => {
+      notify("Connection Succesful!")
+      val operator = sender
+      operator ! Serial.Write(ByteString(0.toByte, 0.toByte,0.toByte,0.toByte))
+      //do stuff with the operator, e.g. context become opened(op)
+    }*/
     case _ ⇒ println("InputController received unknown message")
   }
 }
