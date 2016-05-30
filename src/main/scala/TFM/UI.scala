@@ -17,6 +17,7 @@ import scala.concurrent.duration._
 import scala.swing._
 
 
+
 class UI extends MainFrame {
 
   title = "kMarkovMelodyGenerator - Diego Milla - TFM - Máster SSII - USAL"
@@ -76,6 +77,10 @@ class UI extends MainFrame {
       contents += Swing.HStrut(5)
       contents += Button("Generar Modelo Markov") {
         markovExtractor ! HMMExtractionRequest(notesDirField.text)
+      }
+      contents += Swing.HStrut(260)
+      contents += Button("Ver Gráfico Joystick") {
+        JoystickChart.setVisible(true)
       }
     }
     contents += Swing.VStrut(10)

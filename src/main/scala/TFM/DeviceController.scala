@@ -6,7 +6,6 @@ import TFM.CommProtocol.ConnectToDeviceRequest
 import akka.actor.{Actor, ActorLogging, ActorRef, Props, Terminated}
 import akka.io.IO
 import akka.stream.actor.ActorPublisher
-import akka.stream.actor.ActorPublisherMessage._
 import akka.stream.{ActorMaterializer, Inlet}
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import akka.util.ByteString
@@ -15,7 +14,6 @@ import com.github.jodersky.flow.stream.Serial
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.collection._
 import scala.util.{Failure, Success}
 import com.github.jodersky.flow.{AccessDeniedException, SerialSettings}
 

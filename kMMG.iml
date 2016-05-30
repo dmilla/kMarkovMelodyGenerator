@@ -19,6 +19,8 @@
     <orderEntry type="library" scope="TEST" name="Maven: org.hamcrest:hamcrest-core:1.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.hamcrest:hamcrest-library:1.1" level="project" />
     <orderEntry type="library" name="Maven: org.scala-lang.modules:scala-swing_2.11:1.0.1" level="project" />
+    <orderEntry type="library" name="Maven: org.jfree:jfreechart:1.0.19" level="project" />
+    <orderEntry type="library" name="Maven: org.jfree:jcommon:1.0.23" level="project" />
     <orderEntry type="library" name="Maven: com.typesafe.akka:akka-actor_2.11:2.4.2" level="project" />
     <orderEntry type="library" name="Maven: com.typesafe:config:1.3.0" level="project" />
     <orderEntry type="library" name="Maven: org.scala-lang.modules:scala-java8-compat_2.11:0.7.0" level="project" />
