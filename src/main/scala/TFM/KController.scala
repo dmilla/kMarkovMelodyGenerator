@@ -2,8 +2,10 @@ package TFM
 
 import java.text.DecimalFormat
 
-import TFM.CommProtocol.{CalcNoteOutputRequest, SendMidiNoteRequest}
+import TFM.CommProtocol.{CalcNoteOutputRequest, SendMidiNoteRequest, UpdateStatus}
 import akka.actor.Actor
+
+import scala.concurrent.duration.Duration
 
 /**
   * Created by diego on 9/05/16.
@@ -14,28 +16,52 @@ class KController(ui: UI) extends Actor{
   var k: Double = 0.5
 
   val formatter = new DecimalFormat("#.##")
+  val durations = List(1, 2, 3, 4, 6, 8, 12, 16)
 
-  def calcNoteOutput(markovProbabilites: List[(Int, Double)], yPosition: Double) = {
-    val size = markovProbabilites.size
-    val controlNote = ((size - 1) * yPosition).round.toInt
+  def calcNoteOutput(markovProbabilites: List[((Int, Int), Double)], xPosition: Double, yPosition: Double) = {
+    val controlNote = ((24 - 1) * yPosition).round.toInt // Normalized to two octaves
+    val controlDurationIndex = (7 * xPosition).round.toInt // Normalized to 8 possible durations
+    val controlDuration = durations(controlDurationIndex)
     //notify("Initial Markov probabilites: " + markovProbabilites)
-    notify("Control Note is: " + controlNote)
-    val controlProbabilities = calcControlProbabilities(markovProbabilites: List[(Int, Double)], yPosition: Double, controlNote: Int).toMap
+    notify("Control Note is: " + controlNote + " -  Control Duration is: " + controlDuration)
+    val controlProbabilities = calcControlProbabilities(markovProbabilites, controlNote, controlDuration).toMap
     //notify("Final output probabilities: " + controlProbabilities)
-    val out = sample[Int](controlProbabilities)
-    notify("Nota de salida: " + out + " - Se reproducirá una nota normalizada 48 notas por encima")
-    ui.midiSender ! SendMidiNoteRequest(out + 48) //TODO normalize output as well
-    updateControlProbs(controlProbabilities, yPosition)
-    kMMGUI.updateState(out)
+    val out = sample[(Int, Int)](controlProbabilities)
+    kMMGUI.conductor ! UpdateStatus(out)
+    notify("Nota de salida: " + out + " - Se reproducirá una nota normalizada 36 notas por encima")
+    kMMGUI.midiSender ! SendMidiNoteRequest((out._1 + 36, out._2))
+    //ui.midiSender ! SendMidiNoteRequest((out + 48,  1)) //TODO normalize output as well
+    //updateControlProbs(controlProbabilities, yPosition)
+    //kMMGUI.updateState(out)
   }
 
-  def calcControlProbabilities(markovProbabilites: List[(Int, Double)], yPosition: Double, controlNote: Int) = {
-    val probs = scala.collection.mutable.Map[Int, Double]()
+  def calcControlProbabilities(markovProbabilites: List[((Int, Int), Double)], controlNote: Int, controlDuration: Int) = {
+    val probs = scala.collection.mutable.Map[(Int, Int), Double]()
     markovProbabilites.foreach{
-      case(note, prob) =>
-        probs += (note -> calcNoteProbability(prob, note, controlNote))
+      case((note, duration), prob) =>
+        probs += ((note, duration) -> calcNoteAndDurationProbability(prob, note, controlNote, duration, controlDuration))
     }
     probs
+  }
+
+  def calcNoteAndDurationProbability(markovProbability: Double, note: Int, controlNote: Int, duration: Int, controlDuration: Int): Double = {
+    val noteDistance: Int = math.abs(controlNote - note)
+    val durationDistance: Int = math.abs(controlDuration - duration)
+    var outProb: Double = k * markovProbability
+    if (noteDistance == 0 && durationDistance == 0) {
+      val increase: Double = (1.0 - k) * 0.4
+      notify(increase * 100 + "% prob increase for note " + note + " with duration " + duration)
+      outProb += increase
+    } else if ((noteDistance == 0 && durationDistance == 1) || (durationDistance == 0 && noteDistance == 1)) {
+      val increase: Double = (1.0 - k) * 0.1
+      notify(increase * 100 + "% prob increase for note " + note + " with duration " + duration)
+      outProb += increase
+    } else if (noteDistance <= 1 && durationDistance <= 1) {
+      val increase: Double = (1.0 - k) * 0.05
+      notify(increase * 100 + "% prob increase for note " + note + " with duration " + duration)
+      outProb += increase
+    }
+    outProb
   }
 
   def calcNoteProbability(markovProbability: Double, note: Int, controlNote: Int): Double = {
@@ -78,7 +104,7 @@ class KController(ui: UI) extends Actor{
   }
 
   def receive: Receive = {
-    case CalcNoteOutputRequest(markovProbabilities, yPosition) => calcNoteOutput(markovProbabilities, yPosition)
+    case CalcNoteOutputRequest(markovProbabilities, xPosition, yPosition) => calcNoteOutput(markovProbabilities, xPosition, yPosition)
     case _ ⇒ println("InputController received unknown message")
   }
 }

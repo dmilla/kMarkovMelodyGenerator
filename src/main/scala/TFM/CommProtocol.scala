@@ -12,10 +12,12 @@ object CommProtocol {
   case class FolderNotesExtractionRequest(path: String)
   case class FeaturesExtractionRequest(path: String)
   case class HMMExtractionRequest(path: String)
-  case class SendMidiNoteRequest(note: Int)
-  case class CalcNoteOutputRequest(markovProbabilities: List[(Int, Double)], yPosition: Double)
-  case class TransitionsRequest(state: Int)
-  case class UpdateMarkovProbsRequest(state: Int)
+  case class SendMidiNoteRequest(note: (Int, Int))
+  case class CalcNoteOutputRequest(markovProbabilities: List[((Int, Int), Double)], xPosition: Double, yPosition: Double)
+  case class TransitionsRequest(state: (Int, Int))
+  case class UpdateMarkovProbsRequest(state: (Int, Int))
+  case class UpdateStatus(state: (Int, Int))
   case class ConnectToDeviceRequest(port: String)
+  case class NotifyNoteFinished()
 
 }

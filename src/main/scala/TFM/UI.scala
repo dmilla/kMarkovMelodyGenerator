@@ -28,18 +28,21 @@ class UI extends MainFrame {
   val markovExtractor = actorSystem.actorOf(Props(classOf[MarkovExtractor]))
   val midiSender = actorSystem.actorOf(Props[MidiSender])
   val controller = actorSystem.actorOf(Props(classOf[KController], this))
-  val textFieldSize = new Dimension(300, 25)
+  val conductor = actorSystem.actorOf(Props[Conductor])
+  val textFieldSize = new Dimension(360, 25)
   val labelSize = new Dimension(300, 25)
   val numberFieldSize = new Dimension(60, 25)
   val noteField = new TextField { text = "48" }
   noteField.peer.setMaximumSize(numberFieldSize)
+  val durationField = new TextField { text = "1" }
+  durationField.peer.setMaximumSize(numberFieldSize)
   val lastNoteField = new TextField { text = "0" }
   lastNoteField.peer.setMaximumSize(numberFieldSize)
   val yPosField = new TextField { text = "0.8" }
   yPosField.peer.setMaximumSize(numberFieldSize)
   val outputField = new TextArea { rows = 26; lineWrap = true; wordWrap = true; editable = false }
   //val extractorOutputField = new TextArea { rows = 12; lineWrap = true; wordWrap = true; editable = false }
-  val defaultPathFile = new File(System.getProperty("user.home") + "/MidiWebMiner/notes/Piano") // TODO inicializar directorio en carpeta general
+  val defaultPathFile = new File(System.getProperty("user.home") + "/MidiWebMiner/notes with duration/Piano") // TODO inicializar directorio en carpeta general
   //defaultPathFile.mkdirs
   val notesDirChooser = new FileChooser(defaultPathFile)
   val notesDirField = new TextField( defaultPathFile.getAbsolutePath )
@@ -92,8 +95,12 @@ class UI extends MainFrame {
       contents += Swing.HStrut(5)
       contents += noteField
       contents += Swing.HStrut(5)
+      contents += new Label("duración")
+      contents += Swing.HStrut(5)
+      contents += durationField
+      contents += Swing.HStrut(5)
       contents += Button("Enviar") {
-        midiSender ! SendMidiNoteRequest(noteField.text.toInt)
+        midiSender ! SendMidiNoteRequest((noteField.text.toInt, durationField.text.toInt))
       }
     }
     contents += Swing.VStrut(10)
@@ -110,7 +117,7 @@ class UI extends MainFrame {
       }
     }
     contents += Swing.VStrut(10)
-    contents += new BoxPanel(Orientation.Horizontal) {
+    /*contents += new BoxPanel(Orientation.Horizontal) {
       val label = new Label("Estado del modelo de Markov")
       label.peer.setMaximumSize(labelSize)
       label.horizontalAlignment = Alignment.Left
@@ -143,7 +150,7 @@ class UI extends MainFrame {
       }
     }
     contents += controlOctaveLabel
-    contents += controlOctave1
+    contents += controlOctave1*/
     contents += Swing.VStrut(10)
     contents += new Label("Información")
     contents += Swing.VStrut(3)
@@ -154,11 +161,11 @@ class UI extends MainFrame {
     border = Swing.EmptyBorder(10, 10, 10, 10)
   }
 
-  def updateState(state: Int) = {
+ /* def updateState(state: Int) = {
     lastNoteField.text = state.toString
     markovExtractor ! UpdateMarkovProbsRequest(state)
   }
-
+*/
   def addOutput(out: String): Unit = {
     outputField.append(out + "\n")
     outputField.peer.setCaretPosition(outputField.peer.getDocument.getLength)

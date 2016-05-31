@@ -18,7 +18,10 @@ import org.jfree.data.xy.XYDataset
 import org.jfree.data.xy.XYSeries
 import org.jfree.data.xy.XYSeriesCollection
 
-object JoystickChart extends JFrame{
+object JoystickChart extends JFrame {
+
+  var lastX: Double = 0.5
+  var lastY: Double = 0.5
 
   setTitle("Joystick Position")
   setSize(new Dimension(700, 450))
@@ -47,14 +50,14 @@ object JoystickChart extends JFrame{
     val plot = chartPanel.getChart().getXYPlot()
     val p = chartPanel.translateScreenToJava2D(mouseChartEvent.getTrigger().getPoint())
     val plotArea = chartPanel.getScreenDataArea()
-    val chartX = plot.getDomainAxis().java2DToValue(p.getX(), plotArea, plot.getDomainAxisEdge())
-    val chartY = plot.getRangeAxis().java2DToValue(p.getY(), plotArea, plot.getRangeAxisEdge())
+    lastX = plot.getDomainAxis().java2DToValue(p.getX(), plotArea, plot.getDomainAxisEdge())
+    lastY = plot.getRangeAxis().java2DToValue(p.getY(), plotArea, plot.getRangeAxisEdge())
     //val coords = (chartX, chartY)
-    plot.setDataset(createDatasetFromPoint(chartX, chartY))
+    plot.setDataset(createDatasetFromPoint(lastX, lastY))
   }
 
   def createChartPanel: ChartPanel = {
-    val jfreechart = ChartFactory.createScatterPlot("Joystick Position", "X", "Y", createDatasetFromPoint(0.5f, 0.5f), PlotOrientation.VERTICAL, true, true, false)
+    val jfreechart = ChartFactory.createScatterPlot("Joystick Position", "X", "Y", createDatasetFromPoint(lastX, lastY), PlotOrientation.VERTICAL, true, true, false)
     val xyPlot = jfreechart.getXYPlot()
     xyPlot.setDomainCrosshairVisible(true)
     xyPlot.setRangeCrosshairVisible(true)
